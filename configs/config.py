@@ -1,0 +1,25 @@
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+DATA_DIR = PROJECT_ROOT / "data"
+ANNOTATIONS_DIR = DATA_DIR / "annotations"
+RAW_DIR = DATA_DIR / "raw" / "coco10k"
+CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints"
+OUTPUT_DIR = PROJECT_ROOT / "outputs"
+
+IMAGE_SIZE = 256
+MIN_SIZE = 128
+MAX_ASPECT_RATIO = 3.0
+
+TRAIN_RATIO = 0.8
+VAL_RATIO = 0.1
+
+BATCH_SIZE = 4
+NUM_WORKERS = 0
+
+BASE_CHANNELS = 64
+LEARNING_RATE = 3e-4
+EPOCHS = 5
+ALPHA = 0.5
+SEED = 42
