@@ -5,7 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 ANNOTATIONS_DIR = DATA_DIR / "annotations"
 RAW_DIR = DATA_DIR / "raw" / "coco10k"
-CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints2"
+CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints_wavelet_v2"
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
 
 IMAGE_SIZE = 256
@@ -21,5 +21,5 @@ NUM_WORKERS = 0
 BASE_CHANNELS = 32
 LEARNING_RATE = 3e-4
 EPOCHS = 20
-ALPHA = 0.7
+ALPHA = 0.6
 SEED = 42

@@ -11,7 +11,7 @@ from configs.config import (
     BASE_CHANNELS, LEARNING_RATE, EPOCHS, ALPHA, SEED, CHECKPOINT_DIR
 )
 from src.dataset import StegoPairDataset, build_dataloaders
-from src.model import ResNetStegoNetV2
+from src.model_wavelet_v1 import WaveletStegoNetV2
 from src.losses import StegoLoss
 from src.engine import fit
 
@@ -44,7 +44,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device:", device)
 
-    model = ResNetStegoNetV2(base_channels=BASE_CHANNELS).to(device)
+    model = WaveletStegoNetV2(base_channels=BASE_CHANNELS).to(device)
     criterion = StegoLoss(alpha=ALPHA)
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
