@@ -11,7 +11,7 @@ from configs.config import (
     BASE_CHANNELS, ALPHA, SEED, CHECKPOINT_DIR
 )
 from src.dataset import collect_valid_images, StegoPairDataset, build_splits, build_dataloaders
-from src.model import ResNetStegoNet
+from src.model import ResNetStegoNetV2
 from src.losses import StegoLoss
 from src.engine import validate_one_epoch
 
@@ -28,7 +28,7 @@ def main():
     _, _, test_loader = build_dataloaders(train_ds, val_ds, test_ds, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = ResNetStegoNet(base_channels=BASE_CHANNELS).to(device)
+    model = ResNetStegoNetV2(base_channels=BASE_CHANNELS).to(device)
 
     checkpoint = torch.load(CHECKPOINT_DIR / "best.pt", map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
