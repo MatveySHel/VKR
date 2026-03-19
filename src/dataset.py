@@ -4,10 +4,10 @@ import random
 from pathlib import Path
 from typing import Optional
 
-from PIL import Image, UnidentifiedImageError, ImageFile
 import torch
+from PIL import Image, ImageFile, UnidentifiedImageError
 from torch import Tensor
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -47,14 +47,16 @@ def collect_valid_images(
     image_dir = Path(image_dir)
 
     all_paths = [
-        p for p in image_dir.rglob("*")
-        if p.suffix.lower() in valid_exts
+        p for p in image_dir.rglob("*") if p.suffix.lower() in valid_exts
     ]
 
     valid_paths = [
-        p for p in all_paths
-        if is_valid_image(p, min_size=min_size, max_aspect_ratio=max_aspect_ratio)
-    ]
+        p for p in all_paths if is_valid_image(
+            p,
+            min_size=min_size,
+            max_aspect_ratio=max_aspect_ratio
+            )
+        ]
 
     return sorted(valid_paths)
 
@@ -75,10 +77,12 @@ class StegoPairDataset(Dataset):
         self.rng = random.Random(seed)
         self.max_retries = max_retries
 
-        self.transform = transform or transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.ToTensor(),
-        ])
+        self.transform = transform or transforms.Compose(
+            [
+                transforms.Resize((image_size, image_size)),
+                transforms.ToTensor(),
+            ]
+        )
 
     def __len__(self) -> int:
         return len(self.image_paths)
@@ -117,7 +121,12 @@ class StegoPairDataset(Dataset):
         raise RuntimeError("Too many failed image loading attempts")
 
 
-def build_splits(dataset: Dataset, train_ratio: float = 0.8, val_ratio: float = 0.1, seed: int = 42):
+def build_splits(
+        dataset: Dataset,
+        train_ratio: float = 0.8,
+        val_ratio: float = 0.1,
+        seed: int = 42
+        ):
     total = len(dataset)
     train_len = int(total * train_ratio)
     val_len = int(total * val_ratio)
@@ -132,8 +141,31 @@ def build_splits(dataset: Dataset, train_ratio: float = 0.8, val_ratio: float = 
     )
 
 
-def build_dataloaders(train_ds, val_ds, test_ds, batch_size: int = 4, num_workers: int = 0):
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
-    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+def build_dataloaders(
+        train_ds, val_ds,
+        test_ds,
+        batch_size: int = 4,
+        num_workers: int = 0
+        ):
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
+    test_loader = DataLoader(
+        test_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
     return train_loader, val_loader, test_loader

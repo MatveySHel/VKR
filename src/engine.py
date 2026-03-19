@@ -20,7 +20,12 @@ def train_one_epoch(model, loader, optimizer, criterion, device):
 
         optimizer.zero_grad()
         stego, recovered_secret = model(cover, secret)
-        loss, cover_loss, secret_loss = criterion(cover, stego, secret, recovered_secret)
+        loss, cover_loss, secret_loss = criterion(
+            cover,
+            stego,
+            secret,
+            recovered_secret
+        )
         loss.backward()
         optimizer.step()
 
@@ -50,7 +55,12 @@ def validate_one_epoch(model, loader, criterion, device):
         secret = batch["secret"].to(device)
 
         stego, recovered_secret = model(cover, secret)
-        loss, cover_loss, secret_loss = criterion(cover, stego, secret, recovered_secret)
+        loss, cover_loss, secret_loss = criterion(
+            cover,
+            stego,
+            secret,
+            recovered_secret
+        )
 
         stats["loss"] += loss.item()
         stats["cover_loss"] += cover_loss.item()
@@ -65,7 +75,16 @@ def validate_one_epoch(model, loader, criterion, device):
     return dict(stats)
 
 
-def fit(model, train_loader, val_loader, optimizer, criterion, device, epochs=20, ckpt_dir="./checkpoints"):
+def fit(
+        model,
+        train_loader,
+        val_loader,
+        optimizer,
+        criterion,
+        device,
+        epochs=20,
+        ckpt_dir="./checkpoints"
+        ):
     ckpt_dir = Path(ckpt_dir)
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
@@ -73,7 +92,13 @@ def fit(model, train_loader, val_loader, optimizer, criterion, device, epochs=20
     history = []
 
     for epoch in range(1, epochs + 1):
-        train_stats = train_one_epoch(model, train_loader, optimizer, criterion, device)
+        train_stats = train_one_epoch(
+            model,
+            train_loader,
+            optimizer,
+            criterion,
+            device
+        )
         val_stats = validate_one_epoch(model, val_loader, criterion, device)
 
         row = {

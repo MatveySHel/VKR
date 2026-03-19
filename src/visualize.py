@@ -9,7 +9,8 @@ def tensor_psnr(x, y, max_val=1.0):
     if mse == 0:
         return float("inf")
     import math
-    return 10 * math.log10((max_val ** 2) / mse)
+
+    return 10 * math.log10((max_val**2) / mse)
 
 
 @torch.no_grad()

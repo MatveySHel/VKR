@@ -1,19 +1,29 @@
+from src.losses import StegoLoss
+from src.engine import validate_one_epoch
+from src.dataset import (
+    StegoPairDataset, build_dataloaders,
+    build_splits, collect_valid_images
+)
+from src.model_wavelet import WaveletStegoNet
+from configs.config import (
+    ALPHA,
+    BASE_CHANNELS,
+    BATCH_SIZE,
+    CHECKPOINT_DIR,
+    IMAGE_SIZE,
+    MAX_ASPECT_RATIO,
+    MIN_SIZE,
+    NUM_WORKERS,
+    RAW_DIR,
+    SEED,
+    TRAIN_RATIO,
+    VAL_RATIO,
+)
+import torch
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-import torch
-
-from configs.config import (
-    RAW_DIR, IMAGE_SIZE, MIN_SIZE, MAX_ASPECT_RATIO,
-    TRAIN_RATIO, VAL_RATIO, BATCH_SIZE, NUM_WORKERS,
-    BASE_CHANNELS, ALPHA, SEED, CHECKPOINT_DIR
-)
-from src.dataset import collect_valid_images, StegoPairDataset, build_splits, build_dataloaders
-from src.model_wavelet_v1 import WaveletStegoNetV2
-from src.losses import StegoLoss
-from src.engine import validate_one_epoch
 
 
 def main():
@@ -24,11 +34,15 @@ def main():
     )
 
     dataset = StegoPairDataset(valid_images, image_size=IMAGE_SIZE, seed=SEED)
-    train_ds, val_ds, test_ds = build_splits(dataset, train_ratio=TRAIN_RATIO, val_ratio=VAL_RATIO, seed=SEED)
-    _, _, test_loader = build_dataloaders(train_ds, val_ds, test_ds, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS)
+    train_ds, val_ds, test_ds = build_splits(
+        dataset, train_ratio=TRAIN_RATIO, val_ratio=VAL_RATIO, seed=SEED)
+    _, _, test_loader = build_dataloaders(
+        train_ds, val_ds, test_ds,
+        batch_size=BATCH_SIZE, num_workers=NUM_WORKERS
+    )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = WaveletStegoNetV2(base_channels=BASE_CHANNELS).to(device)
+    model = WaveletStegoNet(base_channels=BASE_CHANNELS).to(device)
 
     checkpoint = torch.load(CHECKPOINT_DIR / "best.pt", map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])

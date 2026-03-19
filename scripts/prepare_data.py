@@ -1,26 +1,26 @@
-import sys
+from configs.config import (
+    DATA_DIR,
+    MAX_ASPECT_RATIO,
+    MIN_SIZE,
+    RAW_DIR,
+    SEED,
+    TRAIN_RATIO,
+    VAL_RATIO,
+)
 import json
 import random
+import sys
 import time
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 import requests
-from PIL import Image, UnidentifiedImageError, ImageFile
+from PIL import Image, ImageFile, UnidentifiedImageError
 from pycocotools.coco import COCO
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from configs.config import (
-    DATA_DIR,
-    RAW_DIR,
-    MIN_SIZE,
-    MAX_ASPECT_RATIO,
-    TRAIN_RATIO,
-    VAL_RATIO,
-    SEED,
-)
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -107,7 +107,8 @@ class CocoSubsetDownloader:
         infos = self._valid_img_infos()
         if len(infos) < self.n_images:
             raise ValueError(
-                f"Requested {self.n_images} images, but only {len(infos)} valid images found."
+                f"Requested {self.n_images} images, \
+                but only {len(infos)} valid images found."
             )
 
         sampled = self.rng.sample(infos, self.n_images)
@@ -116,9 +117,14 @@ class CocoSubsetDownloader:
         failed = []
 
         with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
-            futures = [executor.submit(self._download_one, info) for info in sampled]
+            futures = [executor.submit(self._download_one, info)
+                       for info in sampled]
 
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Downloading COCO"):
+            for future in tqdm(
+                as_completed(futures),
+                total=len(futures),
+                desc="Downloading COCO"
+            ):
                 file_name, success, msg = future.result()
                 if success:
                     success_count += 1
@@ -133,7 +139,9 @@ class CocoSubsetDownloader:
                 print(f"[FAILED] {file_name}: {msg}")
 
 
-def is_valid_image(path: str | Path, min_size: int = 128, max_aspect_ratio: float = 3.0) -> bool:
+def is_valid_image(
+        path: str | Path, min_size: int = 128, max_aspect_ratio: float = 3.0
+        ) -> bool:
     path = Path(path)
 
     try:
@@ -162,15 +170,11 @@ def collect_valid_images(
 ) -> list[Path]:
     image_dir = Path(image_dir)
 
-    all_paths = [
-        p for p in image_dir.rglob("*")
-        if p.suffix.lower() in valid_exts
-    ]
+    all_paths = [p for p in image_dir.rglob(
+        "*") if p.suffix.lower() in valid_exts]
 
-    valid_paths = [
-        p for p in all_paths
-        if is_valid_image(p, min_size=min_size, max_aspect_ratio=max_aspect_ratio)
-    ]
+    valid_paths = [p for p in all_paths if is_valid_image(
+        p, min_size=min_size, max_aspect_ratio=max_aspect_ratio)]
 
     return sorted(valid_paths)
 
@@ -214,7 +218,7 @@ def main():
     val_len = int(total * VAL_RATIO)
 
     train_paths = valid_images[:train_len]
-    val_paths = valid_images[train_len:train_len + val_len]
+    val_paths = valid_images[train_len: train_len + val_len]
     test_paths = valid_images[train_len + val_len:]
 
     save_split("train", train_paths, splits_dir)
