@@ -1,1 +1,1 @@
-# Stego ResNet Project
+# Stego Project (ResNet+Wavelet+attacks)
