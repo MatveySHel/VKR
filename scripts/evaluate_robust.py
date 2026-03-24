@@ -3,6 +3,7 @@ from src.metrics import mse_to_psnr
 from src.losses import StegoLoss
 from src.dataset import StegoPairDataset, build_dataloaders
 from src.attacks import (
+    CutoutAttack,
     GaussianBlurAttack,
     GaussianNoiseAttack,
     IdentityAttack,
@@ -32,7 +33,7 @@ def load_split(name: str):
 @torch.no_grad()
 def evaluate_with_attack(
     base_model, loader, criterion, device, attack, attack_name: str
-        ):
+):
     base_model.eval()
     stats = defaultdict(float)
     num_batches = 0
@@ -81,7 +82,7 @@ def main():
     base_model = WaveletStegoNet(base_channels=BASE_CHANNELS).to(device)
 
     checkpoint = torch.load(
-        CHECKPOINT_DIR / "wavelet_v2_robust" / "best.pt",
+        CHECKPOINT_DIR / "best.pt",
         map_location=device,
     )
 
@@ -99,17 +100,18 @@ def main():
     attacks = {
         "clean": IdentityAttack().to(device),
         "noise": GaussianNoiseAttack(
-                std_min=0.01, std_max=0.03, p=1.0
-            ).to(device),
+            std_min=0.01, std_max=0.03, p=1.0
+        ).to(device),
         "blur": GaussianBlurAttack(
-                kernel_size=5, sigma_min=0.8, sigma_max=1.2, p=1.0
-            ).to(device),
+            kernel_size=5, sigma_min=0.8, sigma_max=1.2, p=1.0
+        ).to(device),
         "resize": ResizeAttack(
-                scale_min=0.6, scale_max=0.85, p=1.0
-            ).to(device),
+            scale_min=0.6, scale_max=0.85, p=1.0
+        ).to(device),
         "jpeg_like": JPEGLikeAttack(
-                scale_min=0.7, scale_max=0.95, q_min=24, q_max=80, p=1.0
-            ).to(device),
+            scale_min=0.7, scale_max=0.95, q_min=24, q_max=80, p=1.0
+        ).to(device),
+        "cutout": CutoutAttack(n_holes=3, length=32, p=1.0).to(device),
     }
 
     results = {}

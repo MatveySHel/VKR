@@ -5,7 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 ANNOTATIONS_DIR = DATA_DIR / "annotations"
 RAW_DIR = DATA_DIR / "raw" / "coco10k"
-CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints"
+CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints_robust"
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
 
 IMAGE_SIZE = 256

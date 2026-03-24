@@ -1,17 +1,3 @@
-from src.model_wavelet import WaveletStegoNet
-from src.metrics import tensor_mse
-from src.dataset import StegoPairDataset, build_dataloaders
-from src.attacks import (
-    GaussianBlurAttack,
-    GaussianNoiseAttack,
-    IdentityAttack,
-    JPEGLikeAttack,
-    ResizeAttack,
-)
-from configs.config import (
-    BASE_CHANNELS, BATCH_SIZE, CHECKPOINT_DIR,
-    DATA_DIR, IMAGE_SIZE, NUM_WORKERS, SEED
-)
 import torch
 import matplotlib.pyplot as plt
 import json
@@ -19,6 +5,34 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from configs.config import (
+    BASE_CHANNELS,
+    BATCH_SIZE,
+    DATA_DIR,
+    CHECKPOINT_DIR,
+    IMAGE_SIZE,
+    MAX_ASPECT_RATIO,
+    MIN_SIZE,
+    NUM_WORKERS,
+    RAW_DIR,
+    SEED,
+    TRAIN_RATIO,
+    VAL_RATIO,
+)
+from src.model_wavelet import WaveletStegoNet
+from src.attacks import (
+    CutoutAttack,
+    GaussianBlurAttack,
+    GaussianNoiseAttack,
+    IdentityAttack,
+    JPEGLikeAttack,
+    ResizeAttack,
+)
+from src.metrics import tensor_mse
+from src.dataset import (
+    StegoPairDataset, build_dataloaders, build_splits, collect_valid_images
+)
 
 
 def load_split(name: str):
@@ -39,7 +53,7 @@ def tensor_psnr(x, y, max_val=1.0):
 @torch.no_grad()
 def visualize_robust_predictions(
     base_model, loader, device, attack, attack_name: str, n_samples=2
-        ):
+):
     base_model.eval()
     batch = next(iter(loader))
 
@@ -90,8 +104,15 @@ def visualize_robust_predictions(
 
 
 def main():
-    test_paths = load_split("test")
-    test_ds = StegoPairDataset(test_paths, image_size=IMAGE_SIZE, seed=SEED)
+    valid_images = collect_valid_images(
+        RAW_DIR,
+        min_size=MIN_SIZE,
+        max_aspect_ratio=MAX_ASPECT_RATIO,
+    )
+
+    dataset = StegoPairDataset(valid_images, image_size=IMAGE_SIZE, seed=SEED)
+    train_ds, val_ds, test_ds = build_splits(
+        dataset, train_ratio=TRAIN_RATIO, val_ratio=VAL_RATIO, seed=SEED)
     _, _, test_loader = build_dataloaders(
         test_ds,
         test_ds,
@@ -106,7 +127,7 @@ def main():
     base_model = WaveletStegoNet(base_channels=BASE_CHANNELS).to(device)
 
     checkpoint = torch.load(
-        CHECKPOINT_DIR / "wavelet_v2_robust" / "best.pt",
+        CHECKPOINT_DIR / "best.pt",
         map_location=device,
     )
 
@@ -118,22 +139,23 @@ def main():
 
     base_model.load_state_dict(cleaned_state_dict)
 
-    attack_name = "noise"
+    attack_name = "cutout"
 
     attacks = {
         "clean": IdentityAttack().to(device),
         "noise": GaussianNoiseAttack(
-                std_min=0.01, std_max=0.03, p=1.0
-            ).to(device),
+            std_min=0.01, std_max=0.03, p=1.0
+        ).to(device),
         "blur": GaussianBlurAttack(
-                kernel_size=5, sigma_min=0.8, sigma_max=1.2, p=1.0
-            ).to(device),
+            kernel_size=5, sigma_min=0.8, sigma_max=1.2, p=1.0
+        ).to(device),
         "resize": ResizeAttack(
-                scale_min=0.6, scale_max=0.85, p=1.0
-            ).to(device),
+            scale_min=0.6, scale_max=0.85, p=1.0
+        ).to(device),
         "jpeg_like": JPEGLikeAttack(
-                scale_min=0.7, scale_max=0.95, q_min=24, q_max=80, p=1.0
-            ).to(device),
+            scale_min=0.7, scale_max=0.95, q_min=24, q_max=80, p=1.0
+        ).to(device),
+        "cutout": CutoutAttack(n_holes=1, length=16, p=1.0).to(device),
     }
 
     attack = attacks[attack_name]

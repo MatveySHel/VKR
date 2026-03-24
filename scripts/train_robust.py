@@ -4,6 +4,7 @@ from src.losses import StegoLoss
 from src.engine_robust import fit_robust
 from src.dataset import StegoPairDataset, build_dataloaders
 from src.attacks import (
+    CutoutAttack,
     GaussianBlurAttack,
     GaussianNoiseAttack,
     JPEGLikeAttack,
@@ -70,6 +71,7 @@ def main():
             JPEGLikeAttack(
                 scale_min=0.7, scale_max=0.95, q_min=32, q_max=96, p=1.0
             ),
+            CutoutAttack(n_holes=3, length=32, p=1.0),
         ],
         p_identity=0.2,
     )
@@ -87,7 +89,7 @@ def main():
         criterion=criterion,
         device=device,
         epochs=EPOCHS,
-        ckpt_dir=CHECKPOINT_DIR + "_robust",
+        ckpt_dir=CHECKPOINT_DIR,
     )
 
 

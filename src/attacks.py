@@ -18,7 +18,7 @@ class GaussianNoiseAttack(nn.Module):
             std_min: float = 0.0,
             std_max: float = 0.03,
             p: float = 1.0
-            ):
+    ):
         super().__init__()
         self.std_min = std_min
         self.std_max = std_max
@@ -40,7 +40,7 @@ class GaussianBlurAttack(nn.Module):
             sigma_min: float = 0.5,
             sigma_max: float = 1.5,
             p: float = 1.0
-            ):
+    ):
         super().__init__()
         self.kernel_size = kernel_size
         self.sigma_min = sigma_min
@@ -52,7 +52,7 @@ class GaussianBlurAttack(nn.Module):
             device: torch.device,
             channels: int,
             sigma: float
-            ) -> torch.Tensor:
+    ) -> torch.Tensor:
         k = self.kernel_size
         ax = torch.arange(k, device=device) - (k - 1) / 2.0
         xx, yy = torch.meshgrid(ax, ax, indexing="ij")
@@ -81,7 +81,7 @@ class ResizeAttack(nn.Module):
             scale_max: float = 0.9,
             mode: str = "bilinear",
             p: float = 1.0
-            ):
+    ):
         super().__init__()
         self.scale_min = scale_min
         self.scale_max = scale_max
@@ -149,6 +149,33 @@ class JPEGLikeAttack(nn.Module):
         q = random.randint(self.q_min, self.q_max)
         y = torch.round(y * q) / q
         return torch.clamp(y, 0.0, 1.0)
+
+
+class CutoutAttack(nn.Module):
+    def __init__(
+        self,
+        n_holes: int = 1,
+        length: int = 16,
+        p: float = 1.0
+    ):
+        super().__init__()
+        self.n_holes = n_holes
+        self.length = length
+        self.p = p
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if random.random() > self.p:
+            return x
+
+        b, c, h, w = x.shape
+        mask = torch.ones_like(x)
+
+        for _ in range(self.n_holes):
+            y = random.randint(0, h - self.length)
+            x_pos = random.randint(0, w - self.length)
+            mask[:, :, y:y + self.length, x_pos:x_pos + self.length] = 0.0
+
+        return x * mask
 
 
 class RandomAttackPipeline(nn.Module):
