@@ -4,12 +4,15 @@ from src.losses import StegoLoss
 from src.engine_robust import fit_robust
 from src.dataset import StegoPairDataset, build_dataloaders
 from src.attacks import (
+    BrightnessAttack,
     CutoutAttack,
     GaussianBlurAttack,
     GaussianNoiseAttack,
     JPEGLikeAttack,
     RandomAttackPipeline,
+    RandomComboAttack,
     ResizeAttack,
+    SequentialAttackPipeline,
 )
 from configs.config import (
     ALPHA,
@@ -72,6 +75,24 @@ def main():
                 scale_min=0.7, scale_max=0.95, q_min=32, q_max=96, p=1.0
             ),
             CutoutAttack(n_holes=3, length=32, p=1.0),
+            BrightnessAttack(delta_min=-0.15, delta_max=0.15, p=1.0),
+            RandomComboAttack(
+                attacks=[
+                    GaussianNoiseAttack(std_min=0.005, std_max=0.015, p=1.0),
+                    BrightnessAttack(delta_min=-0.1, delta_max=0.1, p=1.0),
+                    JPEGLikeAttack(scale_min=0.8, scale_max=0.95, q_min=32, q_max=64, p=1.0),
+                ],
+                min_attacks=2,
+                max_attacks=3,
+                p=0.8,
+            ),
+            SequentialAttackPipeline(
+                attacks=[
+                    ResizeAttack(scale_min=0.75, scale_max=0.9, p=1.0),
+                    BrightnessAttack(delta_min=-0.1, delta_max=0.1, p=1.0),
+                ],
+                p=0.7,
+            ),
         ],
         p_identity=0.2,
     )

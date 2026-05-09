@@ -22,6 +22,7 @@ from configs.config import (
 )
 from src.model_wavelet import WaveletStegoNet
 from src.attacks import (
+    BrightnessAttack,
     CutoutAttack,
     GaussianBlurAttack,
     GaussianNoiseAttack,
@@ -148,6 +149,9 @@ def main():
         ).to(device),
         "blur": GaussianBlurAttack(
             kernel_size=5, sigma_min=0.8, sigma_max=1.2, p=1.0
+        ).to(device),
+        "brightness": BrightnessAttack(
+            delta_min=-0.15, delta_max=0.15, p=1.0
         ).to(device),
         "resize": ResizeAttack(
             scale_min=0.6, scale_max=0.85, p=1.0

@@ -178,6 +178,70 @@ class CutoutAttack(nn.Module):
         return x * mask
 
 
+class BrightnessAttack(nn.Module):
+    def __init__(
+        self,
+        delta_min: float = -0.2,
+        delta_max: float = 0.2,
+        p: float = 1.0
+    ):
+        super().__init__()
+        self.delta_min = delta_min
+        self.delta_max = delta_max
+        self.p = p
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if random.random() > self.p:
+            return x
+
+        delta = random.uniform(self.delta_min, self.delta_max)
+        x = x + delta
+        return torch.clamp(x, 0.0, 1.0)
+
+
+class SequentialAttackPipeline(nn.Module):
+    def __init__(self, attacks: list[nn.Module], p: float = 1.0):
+        super().__init__()
+        self.attacks = nn.ModuleList(attacks)
+        self.p = p
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if len(self.attacks) == 0 or random.random() > self.p:
+            return x
+
+        for attack in self.attacks:
+            x = attack(x)
+
+        return x
+
+
+class RandomComboAttack(nn.Module):
+    def __init__(
+        self,
+        attacks: list[nn.Module],
+        min_attacks: int = 1,
+        max_attacks: int | None = None,
+        p: float = 1.0
+    ):
+        super().__init__()
+        self.attacks = nn.ModuleList(attacks)
+        self.min_attacks = max(1, min_attacks)
+        self.max_attacks = min(max_attacks or len(attacks), len(attacks))
+        self.p = p
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if len(self.attacks) == 0 or random.random() > self.p:
+            return x
+
+        count = random.randint(self.min_attacks, self.max_attacks)
+        chosen_attacks = random.sample(list(self.attacks), count)
+
+        for attack in chosen_attacks:
+            x = attack(x)
+
+        return x
+
+
 class RandomAttackPipeline(nn.Module):
 
     def __init__(self, attacks: list[nn.Module], p_identity: float = 0.2):
